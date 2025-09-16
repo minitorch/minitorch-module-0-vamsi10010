@@ -1,5 +1,6 @@
 from typing import Callable, List, Tuple
 
+import math
 import pytest
 from hypothesis import given
 from hypothesis.strategies import lists
@@ -46,49 +47,49 @@ def test_same_as_python(x: float, y: float) -> None:
 @given(small_floats)
 def test_relu(a: float) -> None:
     if a > 0:
-        assert relu(a) == a
+        assert_close(relu(a), a)
     if a < 0:
-        assert relu(a) == 0.0
+        assert_close(relu(a), 0.0)
 
 
 @pytest.mark.task0_1
 @given(small_floats, small_floats)
 def test_relu_back(a: float, b: float) -> None:
     if a > 0:
-        assert relu_back(a, b) == b
+        assert_close(relu_back(a, b), b)
     if a < 0:
-        assert relu_back(a, b) == 0.0
+        assert_close(relu_back(a, b), 0.0)
 
 
 @pytest.mark.task0_1
 @given(small_floats)
 def test_id(a: float) -> None:
-    assert id(a) == a
+    assert_close(id(a), a)
 
 
 @pytest.mark.task0_1
 @given(small_floats)
 def test_lt(a: float) -> None:
     """Check that a - 1.0 is always less than a"""
-    assert lt(a - 1.0, a) == 1.0
-    assert lt(a, a - 1.0) == 0.0
+    assert_close(lt(a - 1.0, a), 1.0)
+    assert_close(lt(a, a - 1.0), 0.0)
 
 
 @pytest.mark.task0_1
 @given(small_floats)
 def test_max(a: float) -> None:
-    assert max(a - 1.0, a) == a
-    assert max(a, a - 1.0) == a
-    assert max(a + 1.0, a) == a + 1.0
-    assert max(a, a + 1.0) == a + 1.0
+    assert_close(max(a - 1.0, a), a)
+    assert_close(max(a, a - 1.0), a)
+    assert_close(max(a + 1.0, a), a + 1.0)
+    assert_close(max(a, a + 1.0), a + 1.0)
 
 
 @pytest.mark.task0_1
 @given(small_floats)
 def test_eq(a: float) -> None:
-    assert eq(a, a) == 1.0
-    assert eq(a, a - 1.0) == 0.0
-    assert eq(a, a + 1.0) == 0.0
+    assert_close(eq(a, a), 1.0)
+    assert_close(eq(a, a - 1.0), 0.0)
+    assert_close(eq(a, a + 1.0), 0.0)
 
 
 # ## Task 0.2 - Property Testing
@@ -107,16 +108,21 @@ def test_sigmoid(a: float) -> None:
     * It crosses 0 at 0.5
     * It is  strictly increasing.
     """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    assert sigmoid(a) <= 1 and sigmoid(a) >= 0
+    assert_close(1 - sigmoid(a), sigmoid(-a))
+    assert_close(sigmoid(0), 0.5)
+    assert sigmoid(a + 1) >= sigmoid(a - 1)
 
 
 @pytest.mark.task0_2
 @given(small_floats, small_floats, small_floats)
 def test_transitive(a: float, b: float, c: float) -> None:
     """Test the transitive property of less-than (a < b and b < c implies a < c)"""
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    a, b, c = tuple(sorted([a, b, c]))
+    if a < b and b < c:
+        assert_close(lt(a, b), 1.0)
+        assert_close(lt(b, c), 1.0)
+        assert_close(lt(a, c), 1.0)
 
 
 @pytest.mark.task0_2
@@ -124,8 +130,7 @@ def test_symmetric() -> None:
     """Write a test that ensures that :func:`minitorch.operators.mul` is symmetric, i.e.
     gives the same value regardless of the order of its input.
     """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    assert_close(mul(2, 4), mul(4, 2))
 
 
 @pytest.mark.task0_2
@@ -133,15 +138,13 @@ def test_distribute() -> None:
     r"""Write a test that ensures that your operators distribute, i.e.
     :math:`z \times (x + y) = z \times x + z \times y`
     """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    assert_close(mul(6, add(2, 4)), add(mul(6, 2), mul(6, 4)))
 
 
 @pytest.mark.task0_2
 def test_other() -> None:
     """Write a test that ensures some other property holds for your functions."""
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    assert math.isinf(inv(0))
 
 
 # ## Task 0.3  - Higher-order functions
@@ -168,8 +171,9 @@ def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
     """Write a test that ensures that the sum of `ls1` plus the sum of `ls2`
     is the same as the sum of each element of `ls1` plus each element of `ls2`.
     """
-    # TODO: Implement for Task 0.3.
-    raise NotImplementedError("Need to implement for Task 0.3")
+    sum1 = minitorch.operators.sum(minitorch.operators.zipWith(add, ls1, ls2))
+    sum2 = minitorch.operators.sum(ls1) + minitorch.operators.sum(ls2)
+    assert_close(sum1, sum2)
 
 
 @pytest.mark.task0_3
